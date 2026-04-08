@@ -104,7 +104,7 @@ This script recognizes the following argument:
 EOF
 }
 
-VERSION="1.10.1"
+VERSION="1.12.0"
 
 # If -h or --help is passed, print the usage and exit
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
@@ -343,7 +343,7 @@ cs_sensor_download() {
     fi
 
     existing_installers=$(
-        curl_command -G "https://$(cs_cloud)/sensors/combined/installers/v2?sort=version|desc" \
+        curl_command -G "https://$(cs_cloud)/sensors/combined/installers/v3?sort=version|desc" \
             --data-urlencode "filter=os:\"$cs_os_name\"+os_version:\"*$cs_os_version*\"$cs_api_version_filter$cs_os_arch_filter"
     )
 
@@ -372,7 +372,7 @@ cs_sensor_download() {
 
     installer="${destination_dir}/falcon-sensor.${file_type}"
 
-    curl_command "https://$(cs_cloud)/sensors/entities/download-installer/v1?id=$sha" -o "${installer}"
+    curl_command "https://$(cs_cloud)/sensors/entities/download-installer/v3?id=$sha" -o "${installer}"
 
     handle_curl_error $?
 
@@ -777,7 +777,7 @@ get_oauth_token() {
             fi
             cs_falcon_cloud="${region_hint}"
         else
-            if [ "x${FALCON_CLOUD}" != "x${region_hint}" ]; then
+            if [ "${FALCON_CLOUD}" != "${region_hint}" ]; then
                 echo "WARNING: FALCON_CLOUD='${FALCON_CLOUD}' environment variable specified while credentials only exists in '${region_hint}'" >&2
             fi
         fi

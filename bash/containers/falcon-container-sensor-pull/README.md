@@ -36,14 +36,17 @@ Refer to the [examples](#examples) section for more information on how to use th
 > [!NOTE]
 > While we do support copying the multi-arch image to a different registry using Podman, Docker, or Skopeo, we recommend using Skopeo for this purpose. Skopeo is a tool specifically designed for copying container images between registries and supports multi-arch images.
 
-## Unified Falcon Sensor Image Support
+## Unified Image Support
 
-Starting with Falcon sensor for Linux version 7.31 and above, CrowdStrike has introduced a new unified Falcon sensor that utilizes a single container image as opposed to the regional based sensors.
+CrowdStrike now provides unified images that work across all regions:
 
-For additional context and information, please see the [Tech Alert](https://supportportal.crowdstrike.com/s/article/Tech-Alert-60-day-notice-Unified-installer-image-for-Falcon-sensor-for-Linux).
+- **`falcon-sensor`** (unified) - Single sensor image for version 7.31+
+- **`falcon-container`** (unified) - Single container image for version 7.33+
+- **`falcon-kac`** (unified) - Single KAC image for version 7.33+
+- **`falcon-imageanalyzer`** (unified) - Single IAR image for version 1.0.24+
 
 > [!IMPORTANT]
-> **Backward Compatibility**: Existing users of the `falcon-sensor` type will now automatically receive the new unified sensor. If you need to maintain the traditional regional sensor for any reason, simply change `-t falcon-sensor` to `-t falcon-sensor-regional` in your commands. No other changes to your scripts or workflows are required.
+> **Backward Compatibility**: Existing users automatically receive unified images. For regional images, use `-t falcon-sensor-regional`, `-t falcon-container-regional`, `-t falcon-kac-regional`, or `-t falcon-imageanalyzer-regional`.
 
 ## Security recommendations
 
@@ -65,13 +68,9 @@ To check your version of cURL, run the following command: `curl --version`
 > [!IMPORTANT]
 > The following API scopes are the minimum required to retrieve the images. If you need to perform other operations post-retrieval, please refer to the CrowdStrike documentation to identify any additional scopes that may be required.
 
-- **falcon-sensor | falcon-sensor-regional | falcon-container | falcon-kac | falcon-imageanalyzer | falcon-jobcontroller | falcon-registryassessmentexecutor**
+- **falcon-sensor | falcon-sensor-regional | falcon-container | falcon-container-regional | falcon-kac | falcon-kac-regional | falcon-imageanalyzer | falcon-imageanalyzer-regional | falcon-jobcontroller | falcon-registryassessmentexecutor**
   - `Sensor Download (read)`
   - `Falcon Images Download (read)`
-- **kpagent**
-  - `Sensor Download (read)`
-  - `Falcon Images Download (read)`
-  - `Kubernetes Protection (read)`
 - **falcon-snapshot**
   - `Sensor Download (read)`
   - `Snapshot Scanner Image Download (read)`
@@ -90,7 +89,7 @@ The script supports auto-discovery of the Falcon cloud region. If the cloud regi
 
 ```terminal
 Usage: falcon-container-sensor-pull.sh [options]
-Version: 1.10.1
+Version: 1.12.0
 
 Required Flags:
     -u, --client-id <FALCON_CLIENT_ID>             Falcon API OAUTH Client ID
@@ -109,12 +108,14 @@ Optional Flags:
                                                    Available sensor types:
                                                    -----------------------
                                                    falcon-container
+                                                   falcon-container-regional
                                                    falcon-sensor
                                                    falcon-sensor-regional
                                                    falcon-kac
+                                                   falcon-kac-regional
                                                    falcon-snapshot
                                                    falcon-imageanalyzer
-                                                   kpagent
+                                                   falcon-imageanalyzer-regional
                                                    fcs
                                                    falcon-jobcontroller
                                                    falcon-registryassessmentexecutor
@@ -149,7 +150,7 @@ Help Options:
 | `-c`, `--copy <REGISTRY/NAMESPACE>`            | `$COPY`                 | `None` (Optional)             | Registry you want to copy the sensor image to. Example: `myregistry.com/mynamespace`. <br> *\*By default, the image name and tag are appended. Use `--copy-omit-image-name` and/or `--copy-custom-tag` to change that behavior.*           |
 | `-v`, `--version <SENSOR_VERSION>`             | `$SENSOR_VERSION`       | `None` (Optional)             | Specify sensor version to retrieve from the registry                                                                                                                                                                                                     |
 | `-p`, `--platform <SENSOR_PLATFORM>`           | `$SENSOR_PLATFORM`      | `None` (Optional)             | Specify sensor platform to retrieve from the registry                                                                                                                                                                                                    |
-| `-t`, `--type <SENSOR_TYPE>`                   | `$SENSOR_TYPE`          | `falcon-container` (Optional) | Specify which sensor to download [`falcon-container`, `falcon-sensor`, `falcon-sensor-regional`, `falcon-kac`, `falcon-snapshot`, `falcon-imageanalyzer`, `kpagent`, `fcs`, `falcon-jobcontroller`, `falcon-registryassessmentexecutor`] ([see more details below](#sensor-types)) |
+| `-t`, `--type <SENSOR_TYPE>`                   | `$SENSOR_TYPE`          | `falcon-container` (Optional) | Specify which sensor to download [`falcon-container`, `falcon-container-regional`, `falcon-sensor`, `falcon-sensor-regional`, `falcon-kac`, `falcon-kac-regional`, `falcon-snapshot`, `falcon-imageanalyzer`, `falcon-imageanalyzer-regional`, `fcs`, `falcon-jobcontroller`, `falcon-registryassessmentexecutor`] ([see more details below](#sensor-types)) |
 | `--runtime`                                    | `$CONTAINER_TOOL`       | `docker` (Optional)           | Use a different container runtime [docker, podman, skopeo]. **Default is Docker**.                                                                                                                                                                       |
 | `--dump-credentials`                           | `$CREDS`                | `False` (Optional)            | Print registry credentials to stdout to copy/paste into container tools                                                                                                                                                                                  |
 | `--get-image-path`                             | N/A                     | `None`                        | Get the full image path including the registry, repository, and latest tag for the specified `SENSOR_TYPE`.                                                                                                                                              |
@@ -174,18 +175,20 @@ Help Options:
 
 The following sensor types are available to download:
 
-| Sensor Image Name                   | Description                                           |
-| :---------------------------------- | :---------------------------------------------------- |
+| Sensor Image Name                   | Description                                                                     |
+| :---------------------------------- |:--------------------------------------------------------------------------------|
 | `falcon-sensor`                     | The Falcon sensor for Linux as a DaemonSet deployment (unified - version 7.31+) |
-| `falcon-sensor-regional`            | The Falcon sensor for Linux as a DaemonSet deployment w/ regions (traditional) |
-| `falcon-container` **(default)**    | The Falcon Container sensor for Linux                 |
-| `falcon-kac`                        | The Falcon Kubernetes Admission Controller            |
-| `falcon-snapshot`                   | The Falcon Snapshot scanner                           |
-| `falcon-imageanalyzer`              | The Falcon Image Assessment at Runtime                |
-| `kpagent`                           | The Falcon Kubernetes Protection Agent                |
-| `fcs`                               | The Falcon Cloud Security CLI tool                    |
-| `falcon-jobcontroller`              | The Self Hosted Registry Assessment Jobs Controller   |
-| `falcon-registryassessmentexecutor` | The Self Hosted Registry Assessment Executor          |
+| `falcon-sensor-regional`            | The Falcon sensor for Linux as a DaemonSet deployment w/ regions (traditional)  |
+| `falcon-container` **(default)**    | The Falcon Container sensor for Linux (unified - version 7.33+)                 |
+| `falcon-container-regional`         | The Falcon Container sensor for Linux w/ regions (traditional)                  |
+| `falcon-kac`                        | The Falcon Kubernetes Admission Controller (unified - version 7.33+)            |
+| `falcon-kac-regional`               | The Falcon Kubernetes Admission Controller w/ regions (traditional)             |
+| `falcon-snapshot`                   | The Falcon Snapshot scanner                                                     |
+| `falcon-imageanalyzer`              | The Falcon Image Assessment at Runtime (unified - version 1.0.24+)              |
+| `falcon-imageanalyzer-regional`     | The Falcon Image Assessment at Runtime w/ regions (traditional)                 |
+| `fcs`                               | The Falcon Cloud Security CLI tool                                              |
+| `falcon-jobcontroller`              | The Self Hosted Registry Assessment Jobs Controller                             |
+| `falcon-registryassessmentexecutor` | The Self Hosted Registry Assessment Executor                                    |
 
 ### Examples
 

@@ -60,7 +60,7 @@ This script recognizes the following argument:
 EOF
 }
 
-VERSION="1.10.1"
+VERSION="1.12.0"
 
 # If -h or --help is passed, print the usage and exit
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
@@ -157,7 +157,15 @@ cs_sensor_remove() {
     # Check for package manager lock prior to uninstallation
     check_package_manager_lock
 
+    # Temporarily disable exit-on-error to capture package removal exit code
+    set +e
     remove_package "falcon-sensor"
+    removal_exit_code=$?
+    set -e
+
+    if [ "$removal_exit_code" -ne 0 ]; then
+        die "Failed to remove falcon-sensor package (exit code $removal_exit_code). This may indicate that tamper protection is enabled on the sensor. Please provide FALCON_MAINTENANCE_TOKEN or set FALCON_CLIENT_ID and FALCON_CLIENT_SECRET to retrieve a maintenance token via the API."
+    fi
 }
 
 cs_remove_host_from_console() {
@@ -442,7 +450,7 @@ get_oauth_token() {
             fi
             cs_falcon_cloud="${region_hint}"
         else
-            if [ "x${FALCON_CLOUD}" != "x${region_hint}" ]; then
+            if [ "${FALCON_CLOUD}" != "${region_hint}" ]; then
                 echo "WARNING: FALCON_CLOUD='${FALCON_CLOUD}' environment variable specified while credentials only exists in '${region_hint}'" >&2
             fi
         fi
